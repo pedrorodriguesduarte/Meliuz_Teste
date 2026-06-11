@@ -1,17 +1,26 @@
-# Teste Cashback — Parceiro B
+# Relatorio A/B - Cashback Parceiro B
 
-**Parceiro:** Parceiro B  
-**Período:** 2011-05-01 a 2011-06-30  
-**Arquivo:** `dataset_02_parceiroB.csv`  
-**Gerado em:** 2026-06-11 20:33
+| Campo | Valor |
+|---|---|
+| Parceiro | Parceiro B |
+| Periodo | 2011-05-01 a 2011-06-30 |
+| Arquivo | `dataset_02_parceiroB.csv` |
+| Gerado em | 11/06/2026 20:41 |
+
+## Recomendacao
+
+| | |
+|---|---|
+| **Variante a escalar** | **Grupo 1** |
+| **Decisao** | Escalar Grupo 1 para 100% do trafego. |
+| **Receita liquida** | R$ 286.570 |
+| **Margem liquida** | 7.00% |
+| **Cashback efetivo** | 4.00% |
+| **Confianca** | Media |
 
 ## Resumo executivo
 
-**Decisão:** Escalar **Grupo 1** para 100% do tráfego. Receita líquida total: R$ 286,570 (7.00% do GMV). Cashback efetivo: 4.00% do GMV.
-
-**Confiança:** média — possível desbalanceamento de tráfego nos dados
-
-**Variante a escalar:** Grupo 1
+Escalar Grupo 1 para 100% do trafego. Receita liquida total: R$ 286.570 (7.00% do GMV). Cashback efetivo: 4.00% do GMV.
 
 ## Métricas por variante
 
@@ -25,12 +34,12 @@
 
 | Comparação | Métrica | Lift | p-value | Significativo? |
 |---|---|---:|---:|:---:|
-| Grupo 2 vs Grupo 1 | receita líquida diária | -50.0% | 0.0000 | Sim |
-| Grupo 3 vs Grupo 1 | receita líquida diária | -81.6% | 0.0000 | Sim |
-| Grupo 2 vs Grupo 1 | compradores diários | -31.8% | 0.0000 | Sim |
-| Grupo 3 vs Grupo 1 | compradores diários | -37.1% | 0.0000 | Sim |
-| Grupo 2 vs Grupo 1 | GMV diário | -30.1% | 0.0000 | Sim |
-| Grupo 3 vs Grupo 1 | GMV diário | -35.8% | 0.0000 | Sim |
+| Grupo 2 vs Grupo 1 | receita liquida diaria | -50.0% | 0.0000 | Sim |
+| Grupo 3 vs Grupo 1 | receita liquida diaria | -81.6% | 0.0000 | Sim |
+| Grupo 2 vs Grupo 1 | compradores diarios | -31.8% | 0.0000 | Sim |
+| Grupo 3 vs Grupo 1 | compradores diarios | -37.1% | 0.0000 | Sim |
+| Grupo 2 vs Grupo 1 | GMV diario | -30.1% | 0.0000 | Sim |
+| Grupo 3 vs Grupo 1 | GMV diario | -35.8% | 0.0000 | Sim |
 
 ## Qualidade dos dados
 

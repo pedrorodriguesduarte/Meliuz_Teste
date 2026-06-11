@@ -1,17 +1,26 @@
-# Teste Cashback — Parceiro A
+# Relatorio A/B - Cashback Parceiro A
 
-**Parceiro:** Parceiro A  
-**Período:** 2011-01-01 a 2011-04-02  
-**Arquivo:** `dataset_01_parceiroA.csv`  
-**Gerado em:** 2026-06-11 20:33
+| Campo | Valor |
+|---|---|
+| Parceiro | Parceiro A |
+| Periodo | 2011-01-01 a 2011-04-02 |
+| Arquivo | `dataset_01_parceiroA.csv` |
+| Gerado em | 11/06/2026 20:41 |
+
+## Recomendacao
+
+| | |
+|---|---|
+| **Variante a escalar** | **Grupo 1** |
+| **Decisao** | Escalar Grupo 1 para 100% do trafego. |
+| **Receita liquida** | R$ 404.711 |
+| **Margem liquida** | 7.22% |
+| **Cashback efetivo** | 4.16% |
+| **Confianca** | Alta |
 
 ## Resumo executivo
 
-**Decisão:** Escalar **Grupo 1** para 100% do tráfego. Receita líquida total: R$ 404,711 (7.22% do GMV). Cashback efetivo: 4.16% do GMV. Nota: Grupo 3 gera +18.4% de compradores e R$ 6,785,856 de GMV, mas com R$ 264,287 de receita líquida (-140,424 vs. Grupo 1). Só faz sentido priorizar volume se a estratégia for crescimento a curto prazo com margem sacrificada.
-
-**Confiança:** alta — melhor receita líquida e baseline de referência
-
-**Variante a escalar:** Grupo 1
+Escalar Grupo 1 para 100% do trafego. Receita liquida total: R$ 404.711 (7.22% do GMV). Cashback efetivo: 4.16% do GMV. Nota: Grupo 3 gera +18.4% de compradores e R$ 6.785.856 de GMV, mas com R$ 264.287 de receita liquida (R$ -140.424 a menos que Grupo 1). Priorizar volume so faz sentido se a estrategia for crescimento com margem sacrificada.
 
 ## Métricas por variante
 
@@ -25,12 +34,12 @@
 
 | Comparação | Métrica | Lift | p-value | Significativo? |
 |---|---|---:|---:|:---:|
-| Grupo 2 vs Grupo 1 | receita líquida diária | -11.7% | 0.0000 | Sim |
-| Grupo 3 vs Grupo 1 | receita líquida diária | -34.7% | 0.0000 | Sim |
-| Grupo 2 vs Grupo 1 | compradores diários | +12.3% | 0.0000 | Sim |
-| Grupo 3 vs Grupo 1 | compradores diários | +18.4% | 0.0000 | Sim |
-| Grupo 2 vs Grupo 1 | GMV diário | +14.6% | 0.0000 | Sim |
-| Grupo 3 vs Grupo 1 | GMV diário | +21.1% | 0.0000 | Sim |
+| Grupo 2 vs Grupo 1 | receita liquida diaria | -11.7% | 0.0000 | Sim |
+| Grupo 3 vs Grupo 1 | receita liquida diaria | -34.7% | 0.0000 | Sim |
+| Grupo 2 vs Grupo 1 | compradores diarios | +12.3% | 0.0000 | Sim |
+| Grupo 3 vs Grupo 1 | compradores diarios | +18.4% | 0.0000 | Sim |
+| Grupo 2 vs Grupo 1 | GMV diario | +14.6% | 0.0000 | Sim |
+| Grupo 3 vs Grupo 1 | GMV diario | +21.1% | 0.0000 | Sim |
 
 ## Qualidade dos dados
 

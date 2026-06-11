@@ -27,16 +27,16 @@ from scipy import stats
 MONETARY_COLS = ("comissão", "cashback", "vendas totais")
 REQUIRED_COLS = ("Data", "Grupos de usuários", "Parceiro", "compradores", *MONETARY_COLS)
 TRACKING_COLUMNS = (
-    "data_analise",
-    "nome_teste",
-    "parceiro",
-    "periodo",
-    "variantes",
-    "resultado",
-    "decisao",
-    "variante_escalar",
-    "confianca",
-    "alertas",
+    "Data da analise",
+    "Nome do teste",
+    "Descricao",
+    "Resultado",
+    "Decisao tomada",
+    "Variante a escalar",
+    "Receita liquida",
+    "Cashback efetivo",
+    "Confianca",
+    "Alertas",
 )
 
 
@@ -75,10 +75,13 @@ class AnalysisResult:
     comparisons: list[PairwiseComparison]
     data_issues: list[str]
     winner: str
-    decision: str
+    decision_detail: str
     confidence: str
     test_name: str
-    description: str
+    descricao: str
+    resultado: str
+    decisao: str
+    alertas_resumo: str
 
 
 # ---------------------------------------------------------------------------
@@ -233,6 +236,68 @@ def pairwise_tests(df: pd.DataFrame, metric_col: str, metric_label: str) -> list
     return results
 
 
+def simplify_confidence(raw: str) -> str:
+    if raw.startswith("alta"):
+        return "Alta"
+    if "desbalanceamento" in raw or raw.startswith("média"):
+        return "Media"
+    return "Baixa"
+
+
+def summarize_alerts(issues: list[str]) -> str:
+    if not issues:
+        return "Nenhum"
+    tags: list[str] = []
+    if any("SRM" in i or "desbalanceamento" in i for i in issues):
+        tags.append("Desbalanceamento de trafego")
+    if any("Outliers" in i for i in issues):
+        tags.append("Outliers de volume")
+    if any("desalinhada" in i for i in issues):
+        tags.append("Datas desalinhadas")
+    if any("degraus" in i for i in issues):
+        tags.append("Cashback em degraus fixos")
+    if any("negativa" in i or "≤ 0" in i for i in issues):
+        tags.append("Margem negativa")
+    return "; ".join(tags) if tags else f"{len(issues)} alerta(s)"
+
+
+def build_sheet_texts(
+    metrics: list[GroupMetrics],
+    winner: str,
+    partner: str,
+    period_start: str,
+    period_end: str,
+    comparisons: list[PairwiseComparison],
+) -> tuple[str, str, str]:
+    best = next(m for m in metrics if m.grupo == winner)
+    runner = sorted(metrics, key=lambda m: m.net, reverse=True)[1] if len(metrics) > 1 else best
+    variantes = ", ".join(m.grupo for m in metrics)
+
+    descricao = (
+        f"Teste A/B de cashback no {partner}, periodo {period_start} a {period_end}. "
+        f"Variantes: {variantes}."
+    )
+
+    resultado = (
+        f"{winner} teve a maior receita liquida ({format_brl(best.net)}, margem {best.net_pct:.1f}%). "
+        f"Segundo lugar: {runner.grupo} ({format_brl(runner.net)}). "
+        f"Cashback efetivo do vencedor: {best.cashback_pct:.1f}%."
+    )
+
+    gmv_leader = max(metrics, key=lambda m: m.gmv)
+    if gmv_leader.grupo != winner:
+        vol = next(
+            (c for c in comparisons if c.metric == "compradores diarios" and c.grupo_b == gmv_leader.grupo),
+            None,
+        )
+        if vol and vol.lift_pct > 5:
+            resultado += f" {gmv_leader.grupo} gerou mais volume (+{vol.lift_pct:.0f}%), mas com menos margem."
+
+    decisao = f"Escalar {winner} para 100% do trafego."
+
+    return descricao, resultado, decisao
+
+
 def choose_winner(
     metrics: list[GroupMetrics],
     comparisons: list[PairwiseComparison],
@@ -258,42 +323,41 @@ def choose_winner(
             if gmv_best.grupo != best.grupo:
                 best = gmv_best
 
-    net_comps = [c for c in comparisons if c.metric == "receita líquida diária" and c.grupo_b == best.grupo]
+    net_comps = [c for c in comparisons if c.metric == "receita liquida diaria" and c.grupo_b == best.grupo]
     ref = metrics[0].grupo
     if best.grupo == ref:
-        confidence = "alta — melhor receita líquida e baseline de referência"
+        confidence = "alta — melhor receita liquida e baseline de referencia"
     elif net_comps and net_comps[0].significant:
-        confidence = "alta — diferença estatisticamente significativa (p < 0,05)"
+        confidence = "alta — diferenca estatisticamente significativa (p < 0,05)"
     elif net_comps:
-        confidence = "média — melhor receita líquida, mas diferença não significativa"
+        confidence = "media — melhor receita liquida, mas diferenca nao significativa"
     else:
-        confidence = "média"
+        confidence = "media"
 
     if any("SRM" in i or "desbalanceamento" in i for i in issues):
-        confidence = "média — possível desbalanceamento de tráfego nos dados"
+        confidence = "media — possivel desbalanceamento de trafego nos dados"
 
     runner = sorted(metrics, key=lambda m: m.net, reverse=True)[1] if len(metrics) > 1 else None
     gmv_leader = max(metrics, key=lambda m: m.gmv)
 
     decision_parts = [
-        f"Escalar **{best.grupo}** para 100% do tráfego.",
-        f"Receita líquida total: R$ {best.net:,.0f} ({best.net_pct:.2f}% do GMV).",
+        f"Escalar {best.grupo} para 100% do trafego.",
+        f"Receita liquida total: {format_brl(best.net)} ({best.net_pct:.2f}% do GMV).",
         f"Cashback efetivo: {best.cashback_pct:.2f}% do GMV.",
     ]
 
     if runner and gmv_leader.grupo != best.grupo:
-        vol_lift_comps = [c for c in comparisons if c.metric == "compradores diários" and c.grupo_b == gmv_leader.grupo]
+        vol_lift_comps = [c for c in comparisons if c.metric == "compradores diarios" and c.grupo_b == gmv_leader.grupo]
         if vol_lift_comps and vol_lift_comps[0].lift_pct > 5 and vol_lift_comps[0].significant:
             decision_parts.append(
                 f"Nota: {gmv_leader.grupo} gera +{vol_lift_comps[0].lift_pct:.1f}% de compradores "
-                f"e R$ {gmv_leader.gmv:,.0f} de GMV, mas com R$ {gmv_leader.net:,.0f} de receita líquida "
-                f"({gmv_leader.net - best.net:+,.0f} vs. {best.grupo}). "
-                "Só faz sentido priorizar volume se a estratégia for crescimento a curto prazo "
-                "com margem sacrificada."
+                f"e {format_brl(gmv_leader.gmv)} de GMV, mas com {format_brl(gmv_leader.net)} de receita liquida "
+                f"({format_brl(gmv_leader.net - best.net)} a menos que {best.grupo}). "
+                "Priorizar volume so faz sentido se a estrategia for crescimento com margem sacrificada."
             )
 
     if best.net_pct <= 0:
-        decision_parts.append("ALERTA: variante vencedora tem margem líquida ≤ 0. Revisar estrutura de comissão.")
+        decision_parts.append("ALERTA: variante vencedora tem margem liquida zero ou negativa.")
 
     return best.grupo, " ".join(decision_parts), confidence
 
@@ -302,7 +366,7 @@ def infer_test_name(path: Path, partner: str) -> str:
     stem = path.stem
     match = re.search(r"parceiro([ABC])", stem, re.I)
     letter = match.group(1).upper() if match else partner.split()[-1]
-    return f"Teste Cashback — Parceiro {letter}"
+    return f"Cashback Parceiro {letter}"
 
 
 # ---------------------------------------------------------------------------
@@ -315,21 +379,31 @@ def format_brl(value: float) -> str:
 
 
 def generate_report(result: AnalysisResult) -> str:
+    best = next(m for m in result.groups if m.grupo == result.winner)
     lines: list[str] = []
-    lines.append(f"# {result.test_name}")
+    lines.append(f"# Relatorio A/B - {result.test_name}")
     lines.append("")
-    lines.append(f"**Parceiro:** {result.partner}  ")
-    lines.append(f"**Período:** {result.period_start} a {result.period_end}  ")
-    lines.append(f"**Arquivo:** `{result.file_path}`  ")
-    lines.append(f"**Gerado em:** {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    lines.append(f"| Campo | Valor |")
+    lines.append(f"|---|---|")
+    lines.append(f"| Parceiro | {result.partner} |")
+    lines.append(f"| Periodo | {result.period_start} a {result.period_end} |")
+    lines.append(f"| Arquivo | `{result.file_path}` |")
+    lines.append(f"| Gerado em | {datetime.now().strftime('%d/%m/%Y %H:%M')} |")
+    lines.append("")
+    lines.append("## Recomendacao")
+    lines.append("")
+    lines.append("| | |")
+    lines.append("|---|---|")
+    lines.append(f"| **Variante a escalar** | **{result.winner}** |")
+    lines.append(f"| **Decisao** | {result.decisao} |")
+    lines.append(f"| **Receita liquida** | {format_brl(best.net)} |")
+    lines.append(f"| **Margem liquida** | {best.net_pct:.2f}% |")
+    lines.append(f"| **Cashback efetivo** | {best.cashback_pct:.2f}% |")
+    lines.append(f"| **Confianca** | {simplify_confidence(result.confidence)} |")
     lines.append("")
     lines.append("## Resumo executivo")
     lines.append("")
-    lines.append(f"**Decisão:** {result.decision}")
-    lines.append("")
-    lines.append(f"**Confiança:** {result.confidence}")
-    lines.append("")
-    lines.append(f"**Variante a escalar:** {result.winner}")
+    lines.append(result.decision_detail)
     lines.append("")
     lines.append("## Métricas por variante")
     lines.append("")
@@ -387,23 +461,15 @@ def analyze(path: Path) -> AnalysisResult:
     metrics = compute_group_metrics(df)
 
     comparisons: list[PairwiseComparison] = []
-    comparisons.extend(pairwise_tests(df, "net", "receita líquida diária"))
-    comparisons.extend(pairwise_tests(df, "compradores", "compradores diários"))
-    comparisons.extend(pairwise_tests(df, "vendas totais_num", "GMV diário"))
+    comparisons.extend(pairwise_tests(df, "net", "receita liquida diaria"))
+    comparisons.extend(pairwise_tests(df, "compradores", "compradores diarios"))
+    comparisons.extend(pairwise_tests(df, "vendas totais_num", "GMV diario"))
 
     winner, decision, confidence = choose_winner(metrics, comparisons, issues)
     partner = df["Parceiro"].iloc[0]
 
-    best = next(m for m in metrics if m.grupo == winner)
-    runner = sorted(metrics, key=lambda m: m.net, reverse=True)[1] if len(metrics) > 1 else best
-
-    description = (
-        f"Teste de cashback com {len(metrics)} variantes durante "
-        f"{metrics[0].dias} dias. "
-        f"Cashback efetivo varia de {min(m.cashback_pct for m in metrics):.1f}% "
-        f"a {max(m.cashback_pct for m in metrics):.1f}% do GMV. "
-        f"Receita líquida de {winner}: {format_brl(best.net)} vs. "
-        f"{runner.grupo}: {format_brl(runner.net)}."
+    descricao, resultado, decisao = build_sheet_texts(
+        metrics, winner, partner, str(df["Data"].min()), str(df["Data"].max()), comparisons
     )
 
     return AnalysisResult(
@@ -415,25 +481,29 @@ def analyze(path: Path) -> AnalysisResult:
         comparisons=comparisons,
         data_issues=issues,
         winner=winner,
-        decision=decision,
+        decision_detail=decision,
         confidence=confidence,
         test_name=infer_test_name(path, partner),
-        description=description,
+        descricao=descricao,
+        resultado=resultado,
+        decisao=decisao,
+        alertas_resumo=summarize_alerts(issues),
     )
 
 
 def result_to_tracking_row(result: AnalysisResult) -> dict[str, str]:
+    best = next(m for m in result.groups if m.grupo == result.winner)
     return {
-        "data_analise": datetime.now().strftime("%Y-%m-%d"),
-        "nome_teste": result.test_name,
-        "parceiro": result.partner,
-        "periodo": f"{result.period_start} a {result.period_end}",
-        "variantes": ", ".join(m.grupo for m in result.groups),
-        "resultado": result.description,
-        "decisao": result.decision,
-        "variante_escalar": result.winner,
-        "confianca": result.confidence,
-        "alertas": " | ".join(result.data_issues) if result.data_issues else "Nenhum",
+        "Data da analise": datetime.now().strftime("%d/%m/%Y"),
+        "Nome do teste": result.test_name,
+        "Descricao": result.descricao,
+        "Resultado": result.resultado,
+        "Decisao tomada": result.decisao,
+        "Variante a escalar": result.winner,
+        "Receita liquida": format_brl(best.net),
+        "Cashback efetivo": f"{best.cashback_pct:.1f}%",
+        "Confianca": simplify_confidence(result.confidence),
+        "Alertas": result.alertas_resumo,
     }
 
 
@@ -444,7 +514,7 @@ def update_tracking_sheet(row: dict[str, str], tracking_path: Path) -> None:
         updated = pd.concat([existing, pd.DataFrame([row])], ignore_index=True)
     else:
         updated = pd.DataFrame([row], columns=list(TRACKING_COLUMNS))
-    updated.to_csv(tracking_path, index=False)
+    updated.to_csv(tracking_path, index=False, encoding="utf-8-sig")
 
 
 def run_analysis(

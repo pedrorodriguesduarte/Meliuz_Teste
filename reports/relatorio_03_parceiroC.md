@@ -1,17 +1,26 @@
-# Teste Cashback — Parceiro C
+# Relatorio A/B - Cashback Parceiro C
 
-**Parceiro:** Parceiro C  
-**Período:** 2011-07-01 a 2011-08-14  
-**Arquivo:** `dataset_03_parceiroC.csv`  
-**Gerado em:** 2026-06-11 20:33
+| Campo | Valor |
+|---|---|
+| Parceiro | Parceiro C |
+| Periodo | 2011-07-01 a 2011-08-14 |
+| Arquivo | `dataset_03_parceiroC.csv` |
+| Gerado em | 11/06/2026 20:41 |
+
+## Recomendacao
+
+| | |
+|---|---|
+| **Variante a escalar** | **Grupo 1** |
+| **Decisao** | Escalar Grupo 1 para 100% do trafego. |
+| **Receita liquida** | R$ 34.769 |
+| **Margem liquida** | 2.00% |
+| **Cashback efetivo** | 5.00% |
+| **Confianca** | Alta |
 
 ## Resumo executivo
 
-**Decisão:** Escalar **Grupo 1** para 100% do tráfego. Receita líquida total: R$ 34,769 (2.00% do GMV). Cashback efetivo: 5.00% do GMV.
-
-**Confiança:** alta — melhor receita líquida e baseline de referência
-
-**Variante a escalar:** Grupo 1
+Escalar Grupo 1 para 100% do trafego. Receita liquida total: R$ 34.769 (2.00% do GMV). Cashback efetivo: 5.00% do GMV.
 
 ## Métricas por variante
 
@@ -24,9 +33,9 @@
 
 | Comparação | Métrica | Lift | p-value | Significativo? |
 |---|---|---:|---:|:---:|
-| Grupo 2 vs Grupo 1 | receita líquida diária | -100.0% | 0.0000 | Sim |
-| Grupo 2 vs Grupo 1 | compradores diários | -0.6% | 0.9052 | Não |
-| Grupo 2 vs Grupo 1 | GMV diário | -3.1% | 0.5803 | Não |
+| Grupo 2 vs Grupo 1 | receita liquida diaria | -100.0% | 0.0000 | Sim |
+| Grupo 2 vs Grupo 1 | compradores diarios | -0.6% | 0.9052 | Não |
+| Grupo 2 vs Grupo 1 | GMV diario | -3.1% | 0.5803 | Não |
 
 ## Qualidade dos dados
 
